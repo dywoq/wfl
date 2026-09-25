@@ -3,11 +3,13 @@
 
 package mips
 
+import "fmt"
+
 type InstrFormat int
 
-type InstrRegister uint8
+type InstrReg uint8
 
-type InstrRFunction uint8
+type InstrRFunc uint8
 
 type InstrIOpcode uint8
 
@@ -21,21 +23,23 @@ type Instr struct {
 }
 
 type InstrRInfo struct {
-	SrcRegister1 InstrRegister
-	SrcRegister2 InstrRegister
-	DestRegister InstrRegister
-	Function     InstrRFunction
-	ShiftAmount  uint8
+	SrcReg1     InstrReg
+	SrcReg2     InstrReg
+	DestReg     InstrReg
+	Func        InstrRFunc
+	ShiftAmount uint8
 }
 
 type InstrIInfo struct {
-	SrcRegister  InstrRegister
-	DestRegister InstrRegister
-	Value        uint16
+	SrcReg    InstrReg
+	TargetReg InstrReg
+	Val       uint16
+	Opcode    InstrIOpcode
 }
 
 type InstrJInfo struct {
 	Target uint32
+	Opcode InstrJOpcode
 }
 
 const (
@@ -45,102 +49,102 @@ const (
 )
 
 const (
-	InstrRegisterZero InstrRegister = iota
-	InstrRegisterAt
-	InstrRegisterValue0
-	InstrRegisterValue1
-	InstrRegisterArgument0
-	InstrRegisterArgument1
-	InstrRegisterArgument2
-	InstrRegisterArgument3
-	InstrRegisterTemporary0
-	InstrRegisterTemporary1
-	InstrRegisterTemporary2
-	InstrRegisterTemporary3
-	InstrRegisterTemporary4
-	InstrRegisterTemporary5
-	InstrRegisterTemporary6
-	InstrRegisterTemporary7
-	InstrRegisterSaved0
-	InstrRegisterSaved1
-	InstrRegisterSaved2
-	InstrRegisterSaved3
-	InstrRegisterSaved4
-	InstrRegisterSaved5
-	InstrRegisterSaved6
-	InstrRegisterSaved7
-	InstrRegisterTemporary8
-	InstrRegisterTemporary9
-	InstrRegisterKernel0
-	InstrRegisterKernel1
-	InstrRegisterGlobalPointer
-	InstrRegisterStackPointer
-	InstrRegisterFramePointer
-	InstrRegisterReturnAddress
+	InstrRegZero InstrReg = iota
+	InstrRegAt
+	InstrRegVal0
+	InstrRegVal1
+	InstrRegArgument0
+	InstrRegArgument1
+	InstrRegArgument2
+	InstrRegArgument3
+	InstrRegTemporary0
+	InstrRegTemporary1
+	InstrRegTemporary2
+	InstrRegTemporary3
+	InstrRegTemporary4
+	InstrRegTemporary5
+	InstrRegTemporary6
+	InstrRegTemporary7
+	InstrRegSaved0
+	InstrRegSaved1
+	InstrRegSaved2
+	InstrRegSaved3
+	InstrRegSaved4
+	InstrRegSaved5
+	InstrRegSaved6
+	InstrRegSaved7
+	InstrRegTemporary8
+	InstrRegTemporary9
+	InstrRegKernel0
+	InstrRegKernel1
+	InstrRegGlobalPointer
+	InstrRegStackPointer
+	InstrRegFramePointer
+	InstrRegReturnAddress
 )
 
 const (
-	InstrRFunctionSll  InstrRFunction = 0x00
-	InstrRFunctionSrl  InstrRFunction = 0x02
-	InstrRFunctionSra  InstrRFunction = 0x03
-	InstrRFunctionSllv InstrRFunction = 0x04
-	InstrRFunctionSrlv InstrRFunction = 0x06
-	InstrRFunctionSrav InstrRFunction = 0x07
+	InstrRFuncSll  InstrRFunc = 0x00
+	InstrRFuncSrl  InstrRFunc = 0x02
+	InstrRFuncSra  InstrRFunc = 0x03
+	InstrRFuncSllv InstrRFunc = 0x04
+	InstrRFuncSrlv InstrRFunc = 0x06
+	InstrRFuncSrav InstrRFunc = 0x07
 
-	InstrRFunctionJr      InstrRFunction = 0x08
-	InstrRFunctionJalr    InstrRFunction = 0x09
-	InstrRFunctionSyscall InstrRFunction = 0x0C
-	InstrRFunctionBreak   InstrRFunction = 0x0D
-	InstrRFunctionSync    InstrRFunction = 0x0F
+	InstrRFuncJr      InstrRFunc = 0x08
+	InstrRFuncJalr    InstrRFunc = 0x09
+	InstrRFuncSyscall InstrRFunc = 0x0C
+	InstrRFuncBreak   InstrRFunc = 0x0D
+	InstrRFuncSync    InstrRFunc = 0x0F
 
-	InstrRFunctionMfhi InstrRFunction = 0x10
-	InstrRFunctionMthi InstrRFunction = 0x11
-	InstrRFunctionMflo InstrRFunction = 0x12
-	InstrRFunctionMtlo InstrRFunction = 0x13
+	InstrRFuncMfhi InstrRFunc = 0x10
+	InstrRFuncMthi InstrRFunc = 0x11
+	InstrRFuncMflo InstrRFunc = 0x12
+	InstrRFuncMtlo InstrRFunc = 0x13
 
-	InstrRFunctionDsllv InstrRFunction = 0x14
-	InstrRFunctionDsrlv InstrRFunction = 0x16
-	InstrRFunctionDsrav InstrRFunction = 0x17
+	InstrRFuncDsllv InstrRFunc = 0x14
+	InstrRFuncDsrlv InstrRFunc = 0x16
+	InstrRFuncDsrav InstrRFunc = 0x17
 
-	InstrRFunctionMult  InstrRFunction = 0x18
-	InstrRFunctionMultu InstrRFunction = 0x19
-	InstrRFunctionDiv   InstrRFunction = 0x1A
-	InstrRFunctionDivu  InstrRFunction = 0x1B
+	InstrRFuncMult  InstrRFunc = 0x18
+	InstrRFuncMultu InstrRFunc = 0x19
+	InstrRFuncDiv   InstrRFunc = 0x1A
+	InstrRFuncDivu  InstrRFunc = 0x1B
 
-	InstrRFunctionDmult  InstrRFunction = 0x1C
-	InstrRFunctionDmultu InstrRFunction = 0x1D
-	InstrRFunctionDdiv   InstrRFunction = 0x1E
-	InstrRFunctionDdivu  InstrRFunction = 0x1F
+	InstrRFuncDmult  InstrRFunc = 0x1C
+	InstrRFuncDmultu InstrRFunc = 0x1D
+	InstrRFuncDdiv   InstrRFunc = 0x1E
+	InstrRFuncDdivu  InstrRFunc = 0x1F
 
-	InstrRFunctionAdd  InstrRFunction = 0x20
-	InstrRFunctionAddU InstrRFunction = 0x21
-	InstrRFunctionSub  InstrRFunction = 0x22
-	InstrRFunctionSubU InstrRFunction = 0x23
-	InstrRFunctionAnd  InstrRFunction = 0x24
-	InstrRFunctionOr   InstrRFunction = 0x25
-	InstrRFunctionXor  InstrRFunction = 0x26
-	InstrRFunctionNor  InstrRFunction = 0x27
-	InstrRFunctionSlt  InstrRFunction = 0x2A
-	InstrRFunctionSLtU InstrRFunction = 0x2B
+	InstrRFuncAdd  InstrRFunc = 0x20
+	InstrRFuncAddU InstrRFunc = 0x21
+	InstrRFuncSub  InstrRFunc = 0x22
+	InstrRFuncSubU InstrRFunc = 0x23
+	InstrRFuncAnd  InstrRFunc = 0x24
+	InstrRFuncOr   InstrRFunc = 0x25
+	InstrRFuncXor  InstrRFunc = 0x26
+	InstrRFuncNor  InstrRFunc = 0x27
+	InstrRFuncSlt  InstrRFunc = 0x2A
+	InstrRFuncSLtU InstrRFunc = 0x2B
 
-	InstrRFunctionDAdd  InstrRFunction = 0x2C
-	InstrRFunctionDAddU InstrRFunction = 0x2D
-	InstrRFunctionDSub  InstrRFunction = 0x2E
-	InstrRFunctionDSubU InstrRFunction = 0x2F
+	InstrRFuncDAdd  InstrRFunc = 0x2C
+	InstrRFuncDAddU InstrRFunc = 0x2D
+	InstrRFuncDSub  InstrRFunc = 0x2E
+	InstrRFuncDSubU InstrRFunc = 0x2F
 
-	InstrRFunctionTge  InstrRFunction = 0x30
-	InstrRFunctionTgeu InstrRFunction = 0x31
-	InstrRFunctionTlt  InstrRFunction = 0x32
-	InstrRFunctionTltu InstrRFunction = 0x33
-	InstrRFunctionTeq  InstrRFunction = 0x34
-	InstrRFunctionTne  InstrRFunction = 0x36
+	InstrRFuncTge  InstrRFunc = 0x30
+	InstrRFuncTgeu InstrRFunc = 0x31
+	InstrRFuncTlt  InstrRFunc = 0x32
+	InstrRFuncTltu InstrRFunc = 0x33
+	InstrRFuncTeq  InstrRFunc = 0x34
+	InstrRFuncTne  InstrRFunc = 0x36
 
-	InstrRFunctionDsll   InstrRFunction = 0x38
-	InstrRFunctionDsrl   InstrRFunction = 0x3A
-	InstrRFunctionDsra   InstrRFunction = 0x3B
-	InstrRFunctionDsll32 InstrRFunction = 0x3C
-	InstrRFunctionDsrl32 InstrRFunction = 0x3E
-	InstrRFunctionDsra32 InstrRFunction = 0x3F
+	InstrRFuncDsll   InstrRFunc = 0x38
+	InstrRFuncDsrl   InstrRFunc = 0x3A
+	InstrRFuncDsra   InstrRFunc = 0x3B
+	InstrRFuncDsll32 InstrRFunc = 0x3C
+	InstrRFuncDsrl32 InstrRFunc = 0x3E
+	InstrRFuncDsra32 InstrRFunc = 0x3F
 )
 
 const (
@@ -206,6 +210,62 @@ const (
 )
 
 const (
-	InstrJOpcodeJ   InstrIOpcode = 0x02
+	InstrJOpcodeJ   InstrJOpcode = 0x02
 	InstrJOpcodeJal InstrJOpcode = 0x03
 )
+
+func DecodeInstr(binary uint32) (*Instr, error) {
+	// Retrieve the operation code to identify the instruction's format.
+	// By default it is I.
+	format := InstrFormatI
+	opcode := (binary >> 26) & 0x3F
+	if opcode == 0 {
+		format = InstrFormatR
+	}
+	if opcode == uint32(InstrJOpcodeJ) || opcode == uint32(InstrJOpcodeJal) {
+		format = InstrFormatJ
+	}
+
+	switch format {
+	case InstrFormatR:
+		functionCode := binary & 0x3F
+		shiftAmount := (binary >> 6) & 0x1F
+		destReg := (binary >> 11) & 0x1F
+		srcReg2 := (binary >> 16) & 0x1F
+		srcReg1 := (binary >> 21) & 0x1F
+		return &Instr{
+			Format: format,
+			RInfo: &InstrRInfo{
+				SrcReg1:     InstrReg(srcReg1),
+				SrcReg2:     InstrReg(srcReg2),
+				DestReg:     InstrReg(destReg),
+				Func:        InstrRFunc(functionCode),
+				ShiftAmount: uint8(shiftAmount),
+			},
+		}, nil
+	case InstrFormatI:
+		Val := binary & 0xFFFF
+		destReg := (binary >> 16) & 0x1F
+		srcReg := (binary >> 21) & 0x1F
+		return &Instr{
+			Format: format,
+			IInfo: &InstrIInfo{
+				SrcReg:    InstrReg(srcReg),
+				TargetReg: InstrReg(destReg),
+				Val:       uint16(Val),
+				Opcode:    InstrIOpcode(opcode),
+			},
+		}, nil
+	case InstrFormatJ:
+		target := binary & 0x3FFFFFF
+		return &Instr{
+			Format: format,
+			JInfo: &InstrJInfo{
+				Target: target,
+				Opcode: InstrJOpcode(opcode),
+			},
+		}, nil
+	}
+
+	return nil, fmt.Errorf("could not resolve an instruction's format: 0x%X", binary)
+}
