@@ -20,16 +20,17 @@ type Entry struct {
 }
 
 const (
-	ArchX86     = unicorn.ARCH_X86
-	ArchMips    = unicorn.ARCH_MIPS
-	ArchPowerPc = unicorn.ARCH_PPC
+	ArchX86_32 Arch = iota
+	ArchX86_64
+	ArchMips
+	ArchPowerPc
 )
 
 var (
 	ErrUnknownArch = errors.New("unknown arch")
 )
 
-// Start relies on e.Arch to find a matching processor's mode, required by Unicorn Engine.
+// Start relies on e.Arch to find a matching processor's architecture and mode, required by Unicorn Engine.
 // The function maps e.Code at e.StartingAddr with all protection flags (Read/Write/Execute).
 // After these steps, Start runs e.Code.
 //
@@ -38,17 +39,24 @@ var (
 // Returns any error from the Unicorn Engine's API.
 func (e *Entry) Start() error {
 	mode := 0
+	arch := 0
 	switch e.Arch {
-	case ArchX86:
+	case ArchX86_32:
+		arch = unicorn.ARCH_X86
 		mode = unicorn.MODE_32
+	case ArchX86_64:
+		arch = unicorn.ARCH_X86
+		mode = unicorn.MODE_64
 	case ArchMips:
+		arch = unicorn.ARCH_MIPS
 		mode = unicorn.CPU_MIPS64_R4000
 	case ArchPowerPc:
+		arch = unicorn.ARCH_PPC
 		mode = unicorn.CPU_PPC32_604
 	default:
 		return ErrUnknownArch
 	}
-	got, err := unicorn.NewUnicorn(int(e.Arch), mode)
+	got, err := unicorn.NewUnicorn(arch, mode)
 	if err != nil {
 		return err
 	}
