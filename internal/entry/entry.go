@@ -79,12 +79,10 @@ func (e *Entry) Start() error {
 	// Retrieve the conventional memory's physical address and size.
 	// Check if length of e.Code overflows conventionalSize
 	ok := false
-	conventionalPhysAddr := uint64(0)
-	conventionalSize := uint64(0)
+	var conventionalRegion *memory.Region
 	for _, r := range e.memoryRegions {
 		if r.Type == memory.RegionTypeConventional {
-			conventionalPhysAddr = r.PhysAddr
-			conventionalSize = r.Size
+			conventionalRegion = r
 			ok = true
 			break
 		}
@@ -92,28 +90,21 @@ func (e *Entry) Start() error {
 	if !ok {
 		return errors.New("unable to find the conventional region")
 	}
-	if len(e.Code) >= int(conventionalSize) {
-		return fmt.Errorf("code's length overflows the conventional region's size (%d)", conventionalSize)
+	if len(e.Code) >= int(conventionalRegion.Size) {
+		return fmt.Errorf("code's length overflows the conventional region's size (%d)", conventionalRegion.Size)
 	}
 
-	if err := e.uc.MemMapProt(conventionalPhysAddr, conventionalSize, unicorn.PROT_ALL); err != nil {
-		return fmt.Errorf("failed to map conventional region: %v", err)
-	}
-	if err := e.uc.MemWrite(conventionalPhysAddr, e.Code); err != nil {
-		return err
-	}
-
-	// Map other memory regions skipping the conventional one
 	for _, r := range e.memoryRegions {
-		if r.Type == memory.RegionTypeConventional {
-			continue
-		}
 		if err := e.uc.MemMapProt(r.PhysAddr, r.Size, int(r.Flags)); err != nil {
-			return fmt.Errorf("failed to map a memory region (phys addr: %d, size: %d): %v", r.PhysAddr, r.Size, err)
+			return fmt.Errorf("failed to map a memory region (type: %s, phys addr: %d, size: %d): %v", r.Type.String(), r.PhysAddr, r.Size, err)
 		}
 	}
 
-	if err := e.uc.Start(conventionalPhysAddr, conventionalPhysAddr+conventionalSize); err != nil {
+	if err := e.uc.MemWrite(conventionalRegion.PhysAddr, e.Code); err != nil {
+		return fmt.Errorf("failed to write guest program code to conventional region: %v", err)
+	}
+
+	if err := e.uc.Start(conventionalRegion.PhysAddr, conventionalRegion.PhysAddr+conventionalRegion.Size); err != nil {
 		return fmt.Errorf("executing conventional code failed: %v", err)
 	}
 
