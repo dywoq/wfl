@@ -13,17 +13,14 @@ type RegionType int
 
 type Region struct {
 	PhysAddr uint64
-	Data     []byte
 	Size     uint64
 	Flags    RegionFlag
 	Type     RegionType
 }
 
-// NewRegion pre-allocates the region's data slice with size aligned to 4KiB.
 func NewRegion(physAddr uint64, size uint64, ttype RegionType, flags RegionFlag) *Region {
 	return &Region{
 		PhysAddr: physAddr,
-		Data:     make([]byte, 0, (size+4096-1)&^(4096-1)),
 		Size:     size,
 		Flags:    flags,
 		Type:     ttype,
@@ -39,3 +36,11 @@ const (
 const (
 	RegionTypeConventional RegionType = iota
 )
+
+func (t RegionType) String() string {
+	switch t {
+	case RegionTypeConventional:
+		return "conventional"
+	}
+	return "unknown"
+}
