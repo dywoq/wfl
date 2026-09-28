@@ -7,9 +7,9 @@ package broadcast
 // MsgType identifies the type of a message.
 type MsgType int
 
-// Message defines a set of methods to log messages without depending
+// Messenger defines a set of methods to log messages without depending
 // on an implementation.
-type Messager interface {
+type Messenger interface {
 	Msg(t MsgType, v any)
 	Msgf(t MsgType, format string, v ...any)
 }
