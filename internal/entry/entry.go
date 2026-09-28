@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/dywoq/wfl/internal/broadcast"
 	"github.com/dywoq/wfl/internal/memory"
 	"github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
@@ -17,6 +18,7 @@ type Arch int
 type Entry struct {
 	Arch          Arch
 	Code          []byte
+	Messenger     broadcast.Messenger
 	memoryRegions []*memory.Region
 	uc            unicorn.Unicorn
 }
@@ -55,15 +57,19 @@ func (e *Entry) Start() error {
 	case ArchX86_32:
 		arch = unicorn.ARCH_X86
 		mode = unicorn.MODE_32
+		e.infof("* architecture: x86_32")
 	case ArchX86_64:
 		arch = unicorn.ARCH_X86
 		mode = unicorn.MODE_64
+		e.infof("* architecture: x86_64")
 	case ArchMips:
 		arch = unicorn.ARCH_MIPS
 		mode = unicorn.CPU_MIPS64_R4000
+		e.infof("* architecture: mips r4000")
 	case ArchPowerPc:
 		arch = unicorn.ARCH_PPC
 		mode = unicorn.CPU_PPC32_604
+		e.infof("* architecture: powerpc 32 604")
 	default:
 		return ErrUnknownArch
 	}
@@ -95,6 +101,7 @@ func (e *Entry) Start() error {
 	}
 
 	for _, r := range e.memoryRegions {
+		e.errf("memory region (phys addr: 0x%X, size: 0x%X, type: %s)", r.PhysAddr, r.Size, r.Type)
 		if err := e.uc.MemMapProt(r.PhysAddr, r.Size, int(r.Flags)); err != nil {
 			return fmt.Errorf("failed to map a memory region (type: %s, phys addr: %d, size: %d): %v", r.Type.String(), r.PhysAddr, r.Size, err)
 		}
@@ -103,6 +110,8 @@ func (e *Entry) Start() error {
 	if err := e.uc.MemWrite(conventionalRegion.PhysAddr, e.Code); err != nil {
 		return fmt.Errorf("failed to write guest program code to conventional region: %v", err)
 	}
+
+	e.infof("executing the conventional memory region")
 
 	if err := e.uc.Start(conventionalRegion.PhysAddr, conventionalRegion.PhysAddr+conventionalRegion.Size); err != nil {
 		return fmt.Errorf("executing conventional code failed: %v", err)
@@ -113,6 +122,31 @@ func (e *Entry) Start() error {
 
 func (e *Entry) initMemoryRegions() {
 	e.memoryRegions = []*memory.Region{
-		memory.NewRegion(0x0, 0x10000, memory.RegionTypeConventional, memory.RegionFlagRead|memory.RegionFlagWrite|memory.RegionFlagExec),
+		memory.NewRegion(0x0, 0x7400000, memory.RegionTypeConventional, memory.RegionFlagRead|memory.RegionFlagWrite|memory.RegionFlagExec),
+		memory.NewRegion(0x7400000, 0xC00000, memory.RegionTypeMmioPorts, memory.RegionFlagRead|memory.RegionFlagWrite),
 	}
+}
+
+func (e *Entry) info(v any) {
+	broadcast.MsgOpt(e.Messenger, broadcast.MsgTypeInfo, v)
+}
+
+func (e *Entry) warn(v any) {
+	broadcast.MsgOpt(e.Messenger, broadcast.MsgTypeWarn, v)
+}
+
+func (e *Entry) err(v any) {
+	broadcast.MsgOpt(e.Messenger, broadcast.MsgTypeError, v)
+}
+
+func (e *Entry) infof(format string, v ...any) {
+	broadcast.MsgfOpt(e.Messenger, broadcast.MsgTypeInfo, format, v...)
+}
+
+func (e *Entry) warnf(format string, v ...any) {
+	broadcast.MsgfOpt(e.Messenger, broadcast.MsgTypeWarn, format, v...)
+}
+
+func (e *Entry) errf(format string, v ...any) {
+	broadcast.MsgfOpt(e.Messenger, broadcast.MsgTypeError, format, v...)
 }
