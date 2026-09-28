@@ -35,12 +35,15 @@ const (
 
 const (
 	RegionTypeConventional RegionType = iota
+	RegionTypeMmioPorts
 )
 
 func (t RegionType) String() string {
 	switch t {
 	case RegionTypeConventional:
 		return "conventional"
+	case RegionTypeMmioPorts:
+		return "mmio_ports"
 	}
 	return "unknown"
 }
