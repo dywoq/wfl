@@ -4,6 +4,11 @@
 // Package broadcast represents a base interface to log messages universally.
 package broadcast
 
+import (
+	"fmt"
+	"os"
+)
+
 // MsgType identifies the type of a message.
 type MsgType int
 
@@ -13,6 +18,10 @@ type Messenger interface {
 	Msg(t MsgType, v any)
 	Msgf(t MsgType, format string, v ...any)
 }
+
+// DefaultMessenger implements [Messenger]. It prints messages into the standard
+// output/error stream.
+type DefaultMessenger struct{}
 
 const (
 	MsgTypeInfo MsgType = iota
@@ -32,4 +41,36 @@ func MsgfOpt(m Messenger, t MsgType, format string, v ...any) {
 	if m != nil {
 		m.Msgf(t, format, v...)
 	}
+}
+
+func (d *DefaultMessenger) Msg(t MsgType, v any) {
+	stream := os.Stdout
+	prefix := ""
+	switch t {
+	case MsgTypeInfo:
+		prefix = "info"
+	case MsgTypeWarn:
+		stream = os.Stderr
+		prefix = "warn"
+	case MsgTypeError:
+		stream = os.Stderr
+		prefix = "error"
+	}
+	fmt.Fprintf(stream, "[%s]\t%v\n", prefix, v)
+}
+
+func (d *DefaultMessenger) Msgf(t MsgType, format string, v ...any) {
+	stream := os.Stdout
+	prefix := ""
+	switch t {
+	case MsgTypeInfo:
+		prefix = "info"
+	case MsgTypeWarn:
+		stream = os.Stderr
+		prefix = "warn"
+	case MsgTypeError:
+		stream = os.Stderr
+		prefix = "error"
+	}
+	fmt.Fprintf(stream, "[%s]\t%s\n", prefix, fmt.Sprintf(format, v...))
 }
