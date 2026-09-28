@@ -19,3 +19,17 @@ const (
 	MsgTypeWarn
 	MsgTypeError
 )
+
+// MsgOpt invokes [Messenger.Msg] if m is not nil.
+func MsgOpt(m Messenger, t MsgType, v any) {
+	if m != nil {
+		m.Msg(t, v)
+	}
+}
+
+// MsgfOpt invokes [Messenger.Msgf] if m is not nil.
+func MsgfOpt(m Messenger, t MsgType, format string, v ...any) {
+	if m != nil {
+		m.Msgf(t, format, v...)
+	}
+}
