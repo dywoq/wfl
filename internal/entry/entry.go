@@ -101,7 +101,7 @@ func (e *Entry) Start() error {
 	}
 
 	for _, r := range e.memoryRegions {
-		e.errf("memory region (phys addr: 0x%X, size: 0x%X, type: %s)", r.PhysAddr, r.Size, r.Type)
+		e.infof("memory region (phys addr: 0x%X, size: 0x%X, type: %s)", r.PhysAddr, r.Size, r.Type)
 		if err := e.uc.MemMapProt(r.PhysAddr, r.Size, int(r.Flags)); err != nil {
 			return fmt.Errorf("failed to map a memory region (type: %s, phys addr: %d, size: %d): %v", r.Type.String(), r.PhysAddr, r.Size, err)
 		}
